@@ -1,15 +1,17 @@
 from __future__ import print_function
+import os
+import arcpy
+import time
 __author__ = 'saurav'
 # Copyright:   (c) Saurav Kumar (kumar.saurav@gmail.com)
 # ArcGIS Version:   10.3
 # Python Version:   2.7
 
-import os
-import arcpy
-import time
 arcpy.env.overwriteOutput = True
 sr = arcpy.SpatialReference(4326)  # decimal degree coordinate system used by most GPS systems
 sr_p = arcpy.SpatialReference(3395)  # projection we used in m
+
+
 def create_watershed(grid, coordinates, play_folder, stage=0, out_geo="merge.gdb", type_of_raster="GRID",
                      mosaic_name="combine", stream_accumulation_number=5000, snapping_tolerance=2):
 
@@ -17,19 +19,28 @@ def create_watershed(grid, coordinates, play_folder, stage=0, out_geo="merge.gdb
 
        grid: a folder that contains other raster folders (tiles) from http://viewer.nationalmap.gov/viewer/ that when
        combined covers all the watersheds area
-       coordinate: a list of dictionaries each dictionary has stname, lat and lng keys (lat and lng in decimal degree)
-       play_folder: an empty folder for all output files
-       stage: stage 0 executes everything; 1 does not combine raster, everything afterwards in on; 2 does not fill,
+
+       coordinate: a list of dictionaries each dictionary has stname, lat and lng keys (lat and lng in decimal degree).
+       See the example at the end for format
+
+       play_folder: an EXISTING folder for all output files, a file geodatabase is created in step 0 inside the folder.
+
+       stage:  0 executes everything; 1 does not combine raster, everything afterwards in on; 2 does not fill,
        everything afterwards in on; 3 does not do flow direction, everything afterwards in on; 4 does not do flow
-       accumulation, everything afterwards in on; 5 does not do stream creation, everything afterwards in on. Stage is
-       useful in restarting program without repeating old steps if one step fails.
-       out_geo: name of geodatabase where everything happen created in the play_folder
+       accumulation, everything afterwards in on; 5 does not do stream creation, everything afterwards in on.
+       Stage is useful in restarting program without repeating old timeconsuming steps, if something  fails.
+
+       out_geo: name of file geodatabase where everything happen created in the play_folder
+
        type_of_raster: type of raster downloaded form NED ... ESRI GRID, IMG etc
+
        mosaic_name: what to call the combined raster
-       stream_accumulation_number: is used to find streams, essentially a accumulation volume which will be called a
-       stream/waterbody
-       snapping_tolerance: is the multiple of cell sizes the points may be moved to lie on the deepest point based on
-       the flow_accumulation raster.
+
+       stream_accumulation_number: is used to find streams; essentially a accumulation volume anything over the volume
+       will be marked 1.. signifying stream/waterbody ... this is just for later analysis
+
+       snapping_tolerance: is the number of raster cells the points (for which watersheds are being delineated) may be
+       moved to lie on the deepest point nearby. A simple way to fix GPS uncertainties.
     """
     try:
 
@@ -153,39 +164,38 @@ if __name__ == '__main__':  # True when script is run directly
 
     grid = r"C:\createWatershed\grid"  # folder that contains subfolder with data(rasters) downloded from NED
 #     This is what my grid directory looks like
-#     root = C:\createWatershed\grid
-# list_file_path = C:\createWatershed\grid\my-directory-list.txt
-# 	- subdirectory n40w079
-# 	- subdirectory USGS_NED_1_n39w077_ArcGrid
-# 	- subdirectory USGS_NED_1_n39w078_ArcGrid
-# 	- subdirectory USGS_NED_1_n39w079_ArcGrid
-# 	- subdirectory USGS_NED_1_n40w077_ArcGrid
-# 	- subdirectory USGS_NED_1_n40w078_ArcGrid
-# --
-# root = C:\createWatershed\grid\n40w079
-# list_file_path = C:\createWatershed\grid\n40w079\my-directory-list.txt
-# 	- subdirectory grdn40w079_1
-# 	- subdirectory info
-# 	- file grdn40w079_1_thumb.jpg (full path: C:\createWatershed\grid\n40w079\grdn40w079_1_thumb.jpg)
-# 	- file n40w079_1_meta.dbf (full path: C:\createWatershed\grid\n40w079\n40w079_1_meta.dbf)
-# 	- file n40w079_1_meta.html (full path: C:\createWatershed\grid\n40w079\n40w079_1_meta.html)
-# 	- file n40w079_1_meta.prj (full path: C:\createWatershed\grid\n40w079\n40w079_1_meta.prj)
-# 	- file n40w079_1_meta.sbn (full path: C:\createWatershed\grid\n40w079\n40w079_1_meta.sbn)
-# 	- file n40w079_1_meta.sbx (full path: C:\createWatershed\grid\n40w079\n40w079_1_meta.sbx)
-# 	- file n40w079_1_meta.shp (full path: C:\createWatershed\grid\n40w079\n40w079_1_meta.shp)
-# 	- file n40w079_1_meta.shp.xml (full path: C:\createWatershed\grid\n40w079\n40w079_1_meta.shp.xml)
-# 	- file n40w079_1_meta.shx (full path: C:\createWatershed\grid\n40w079\n40w079_1_meta.shx)
-# 	- file n40w079_1_meta.txt (full path: C:\createWatershed\grid\n40w079\n40w079_1_meta.txt)
-# 	- file n40w079_1_meta.xml (full path: C:\createWatershed\grid\n40w079\n40w079_1_meta.xml)
-# 	- file ned_1arcsec_g.dbf (full path: C:\createWatershed\grid\n40w079\ned_1arcsec_g.dbf)
-# 	- file ned_1arcsec_g.prj (full path: C:\createWatershed\grid\n40w079\ned_1arcsec_g.prj)
-# 	- file ned_1arcsec_g.sbn (full path: C:\createWatershed\grid\n40w079\ned_1arcsec_g.sbn)
-# 	- file ned_1arcsec_g.sbx (full path: C:\createWatershed\grid\n40w079\ned_1arcsec_g.sbx)
-# 	- file ned_1arcsec_g.shp (full path: C:\createWatershed\grid\n40w079\ned_1arcsec_g.shp)
-# 	- file ned_1arcsec_g.shx (full path: C:\createWatershed\grid\n40w079\ned_1arcsec_g.shx)
-# 	- file NED_DataDictionary.url (full path: C:\createWatershed\grid\n40w079\NED_DataDictionary.url)
-# 	- file readme.pdf (full path: C:\createWatershed\grid\n40w079\readme.pdf)
-#   ..... and other raster folders
+
+# * C:\createWatershed\grid
+#     ** n40w079
+#     ** USGS_NED_1_n39w077_ArcGrid
+#     ** USGS_NED_1_n39w078_ArcGrid
+#     ** USGS_NED_1_n39w079_ArcGrid
+#     ** USGS_NED_1_n40w077_ArcGrid
+#     ** USGS_NED_1_n40w078_ArcGrid
+#     * C:\createWatershed\grid\n40w079
+#         - grdn40w079_1_thumb.jpg
+#         - my-directory-list.txt
+#         - n40w079_1_meta.dbf
+#         - n40w079_1_meta.html
+#         - n40w079_1_meta.prj
+#         - n40w079_1_meta.sbn
+#         - n40w079_1_meta.sbx
+#         - n40w079_1_meta.shp
+#         - n40w079_1_meta.shp.xml
+#         - n40w079_1_meta.shx
+#         - n40w079_1_meta.txt
+#         - n40w079_1_meta.xml
+#         - ned_1arcsec_g.dbf
+#         - ned_1arcsec_g.prj
+#         - ned_1arcsec_g.sbn
+#         - ned_1arcsec_g.sbx
+#         - ned_1arcsec_g.shp
+#         - ned_1arcsec_g.shx
+#         - NED_DataDictionary.url
+#         - readme.pdf
+#         ** grdn40w079_1
+#         ** info
+# #   ..... and other raster folders
 
     play_folder = r"C:\createWatershed"
     coordinates = [
